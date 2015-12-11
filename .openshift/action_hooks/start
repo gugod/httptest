@@ -1,4 +1,4 @@
 #!/bin/bash
-export PATH=$OPENSHIFT_DATA_DIR/perl-5.22.0/bin
+export PATH=$OPENSHIFT_DATA_DIR/perl-5.22.0/bin:$PATH
 hash -r
 nohup plackup --host $OPENSHIFT_DIY_IP --port 8080 $OPENSHIFT_REPO_DIR/server.pl |& /usr/bin/logshifter -tag diy &
