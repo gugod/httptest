@@ -9,7 +9,7 @@ use JSON;
 use YAML;
 
 sub build_response {
-    state $JSON = JSON->new->utf8;;
+    state $JSON = JSON->new->utf8->allow_blessed->allow_unknown;
 
     my ($res_data) = @_;
     my $res = Plack::Response->new(200);
@@ -20,7 +20,7 @@ sub build_response {
         }
         elsif ($res_data->{format} =~ /\A ya?ml \z/x) {
             $res->content_type("text/yaml");
-            $res->body("". JSON->new->utf8->encode($res_data->{body}));
+            $res->body("". YAML::Dump($res_data->{body}));
         }
     } else {
         $res->content_type("text-html");
@@ -39,7 +39,7 @@ sub dispatch_and_fleshen_res_data {
     state $action = {
         "/dumpenv" => sub {
             my ($tx) = @_;
-            $tx->{res_data}{body}{env} = [keys %{$tx->{env}}];
+            $tx->{res_data}{body}{env} = $tx->{env};
         }
     };
 
