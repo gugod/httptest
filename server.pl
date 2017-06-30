@@ -23,10 +23,10 @@ sub build_response {
             $res->body("". YAML::Dump($res_data->{body}));
         }
     } else {
-        $res->content_type("text-html");
-        my $res_body = "<html><head><meta charset=\"utf8\"></head><body>"
+        $res->content_type("text/html");
+        my $res_body = "<html><head><meta charset=\"utf8\"></head><body>\n"
         . join( "<br>\n",
-                (map { ($_, $res_data->{$_} //"") } sort keys %{$res_data->{body}})
+                (map { ($_, $res_data->{body}{$_} //"") } sort keys %{$res_data->{body}})
            ) ."</body></html>";
         $res->body($res_body);
     }
@@ -40,6 +40,9 @@ sub dispatch_and_fleshen_res_data {
         "/dumpenv" => sub {
             my ($tx) = @_;
             $tx->{res_data}{body}{env} = $tx->{env};
+        },
+        "/lipsum" => sub {
+            $tx->{res_data}{body}{lipsum} = "lorem ipsum";
         }
     };
 
