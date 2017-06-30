@@ -64,7 +64,7 @@ sub {
 
     dispatch_and_fleshen_res_data({ res_data => $res_data, req => $req, env => $env });
 
-    if (my $t = $req->query_parameters->{'it-takes-time'}) {
+    if (my $t = $req->query_parameters->{'delay'}) {
         if ($t =~ /\A( [1-9][0-9]* | [0-9]\.[0-9]+ )\z/x) {
             sleep $t;
             $res_data->{body}{start_time} = $start_time;
@@ -76,4 +76,4 @@ sub {
 }
 
 __END__
-curl 'http://localhost:5000/path/to/whatever/?it-takes-time=2.5'
+curl 'http://localhost:5000/path/to/whatever/?delay=2.5'
