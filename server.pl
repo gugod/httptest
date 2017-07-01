@@ -8,6 +8,17 @@ use Plack::Response;
 use JSON;
 use YAML;
 
+use constant ACTION_HANDLERS => {
+    "/dumpenv" => sub {
+        my ($tx) = @_;
+        $tx->{res_data}{body}{env} = $tx->{env};
+    },
+    "/lipsum" => sub {
+        my ($tx) = @_;
+        $tx->{res_data}{body}{lipsum} = "lorem ipsum";
+    }
+};
+
 sub build_response {
     state $JSON = JSON->new->utf8->allow_blessed->allow_unknown;
 
@@ -35,19 +46,14 @@ sub build_response {
 
 sub dispatch_and_fleshen_res_data {
     my ($tx) = @_;
-
-    state $action = {
-        "/dumpenv" => sub {
-            my ($tx) = @_;
-            $tx->{res_data}{body}{env} = $tx->{env};
-        },
-        "/lipsum" => sub {
-            $tx->{res_data}{body}{lipsum} = "lorem ipsum";
-        }
-    };
-
-    if (my $act = $action->{$tx->{res_data}{path}}) {
+    if (my $act = ACTION_HANDLERS->{$tx->{res_data}{path}}) {
         $act->($tx);
+    }
+
+    if (my $t = $tx->{req}->query_parameters->{'delay'}) {
+        if ($t =~ /\A( [1-9][0-9]* | [0-9]\.[0-9]+ )\z/x) {
+            sleep $t;
+        }
     }
 }
 
@@ -55,25 +61,20 @@ sub {
     my $env = shift;
     my $start_time = time;
     my $req = Plack::Request->new($env);
-    my $res_data = { header => {}, body => {}, format => undef };
+    my $res_data = { header => {}, body => { start_time => $start_time }, format => undef };
 
     my ($path, $format) = split(qr{[.?]}, $req->path_info);
 
     if (defined($format)) {
         $format = lc($format);
     }
+
     $res_data->{format} = $format;
-    $res_data->{path}   = $path;
+    $res_data->{path} = $path;
 
     dispatch_and_fleshen_res_data({ res_data => $res_data, req => $req, env => $env });
 
-    if (my $t = $req->query_parameters->{'delay'}) {
-        if ($t =~ /\A( [1-9][0-9]* | [0-9]\.[0-9]+ )\z/x) {
-            sleep $t;
-            $res_data->{body}{start_time} = $start_time;
-            $res_data->{body}{end_time}   = time;
-        }
-    }
+    $res_data->{body}{end_time} = time;
 
     return build_response($res_data);
 }
